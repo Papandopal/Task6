@@ -8,6 +8,7 @@ namespace Domain.Entities
 {
     public class CircuitItem : IDisposable
     {
+        public Guid Id { get; init; } = Guid.NewGuid();
         public SKPoint Position { get; set; }
         public List<SKPath> Figures { get; set; } = new();
         public List<SKPaint> Paints { get; set; } = new();

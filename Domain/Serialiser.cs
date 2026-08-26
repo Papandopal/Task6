@@ -60,12 +60,11 @@ namespace Domain
         {
             return new CircuitItemDTO()
             {
+                Id = item.Id,
                 Position = GetPointDTO(item.Position),
                 Figures = item.Figures.Select(x=>x.ToSvgPathData()).ToList(),
                 Paints = item.Paints.Select(x=>GetPaintDTO(x)).ToList(),
-                //InputConnectedItems = item.InputConnectedItems.ToDictionary(x => GetPointDTO(x.Key).ToString(), x => GetItemDTO(x.Value)),
                 Inputs = item.Inputs.Select(x=>GetPortDTO(x)).ToList(),
-                //OutputConnectedItems = item.OutputConnectedItems.ToDictionary(x => GetPointDTO(x.Key).ToString(), x => GetItemDTO(x.Value)),
                 Outputs = item.Outputs.Select(x => GetPortDTO(x)).ToList(),
                 Type = item.Type
             };
@@ -75,13 +74,12 @@ namespace Domain
         {
             return new CircuitItem()
             {
+                Id = dto.Id,
                 Position = GetPoint(dto.Position),
                 Figures = dto.Figures.Select(x=>SKPath.ParseSvgPathData(x)).ToList(),
                 Paints = dto.Paints.Select(x => GetPaint(x)).ToList(),
                 Behavior = BehaviorFactory.Create(dto.Type),
-                //InputConnectedItems = dto.InputConnectedItems.ToDictionary(x => GetPoint(PointDTO.Parse(x.Key)), x => GetItem(x.Value)),
                 Inputs = dto.Inputs.Select(x=>GetPort(x)).ToList(),
-                //OutputConnectedItems = dto.OutputConnectedItems.ToDictionary(x => GetPoint(PointDTO.Parse(x.Key)), x => GetItem(x.Value)),
                 Outputs = dto.Outputs.Select(x => GetPort(x)).ToList(),
                 Type = dto.Type
             };

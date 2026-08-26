@@ -30,6 +30,14 @@ namespace Task6Itransition.Services
                 var item = Serialiser.GetItem(dto);
                 canvasService.AddItem(item);
             });
+            _hubConnection.On<List<CircuitItemDTO>>("LoadItems", (items) =>
+            {
+                foreach (var item in items)
+                {
+                    var restoredItem = Serialiser.GetItem(item);
+                    canvasService.AddItem(restoredItem);
+                }
+            });
         }
 
         public HubConnection Build()

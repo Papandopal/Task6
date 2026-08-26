@@ -21,6 +21,12 @@ namespace Task6Itransition.Services
         private float scale = 1f;
         private HubConnection? hubConnection;
 
+        public List<CircuitItem> AllItems 
+        { 
+            get => allItems.Values.SelectMany(x=>x).ToList();
+        }
+        public HubConnection? HubConnection { get => hubConnection; }
+
         private async Task StartNetworkConnectionAsync()
         {
             signalRSettings.StartBuildConnection();
@@ -32,6 +38,7 @@ namespace Task6Itransition.Services
         public async Task StartAsync()
         {
             await StartNetworkConnectionAsync();
+            if(hubConnection is not null) await hubConnection.SendAsync("LoadItems");
         }
 
         public void ChangeAction(IDrawer? drawer)
@@ -67,7 +74,6 @@ namespace Task6Itransition.Services
                 if (item is not null)
                 {
                     DrawItem(canvas, item);
-
                 }
             }
         }
@@ -141,7 +147,6 @@ namespace Task6Itransition.Services
                             var distance = (new_item_output.Position - item_input.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
-                                //curFigure!.MouseMove(new MouseMoveModel { X = item_input.Position.X, Y = item_input.Position.Y });
                                 curFigure!.SetPotencialConnection(item_input.Position);
                                 isFindPotencionalConnection = true;
 

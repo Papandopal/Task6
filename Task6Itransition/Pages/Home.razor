@@ -11,6 +11,7 @@
 @using Task6Itransition.Services.Drawers.Interfaces;
 @inject CanvasService canvasService
 @inject SignalRSettings signalRSettings
+@inject SaveSchemeService saveSchemeService
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -29,7 +30,14 @@
 		{
 			if (_curAction != value)
 			{
-				canvasService.ChangeAction(DrawerFactory.GetDrawer(value));
+				if (value == "SaveScheme" && canvasService.HubConnection is not null) {
+					saveSchemeService.SaveScheme(canvasService.AllItems, canvasService.HubConnection);
+				}
+				else
+				{
+					IDrawer? drawer = DrawerFactory.GetDrawer(value);
+					if (drawer is not null) canvasService.ChangeAction(drawer);
+				}
 				_curAction = value;
 			}
 		}

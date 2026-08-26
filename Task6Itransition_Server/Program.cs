@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
 using Domain;
+using Microsoft.EntityFrameworkCore;
 using Task6Itransition.Services;
+using Task6Itransition_Server.Services.Database;
 
 namespace Task6Itransition_Server
 {
@@ -13,6 +15,11 @@ namespace Task6Itransition_Server
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            builder.Services.AddDbContext<AppDbContext>(opt =>
+            {
+                opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
 
             builder.Services.AddSignalR()
                 .AddJsonProtocol(options =>
