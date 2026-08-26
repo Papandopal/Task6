@@ -1,0 +1,93 @@
+﻿<nav class="nav">
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Cursor"))'
+		data-bs-toggle="tooltip" data-bs-placement="bottom"
+		data-bs-title="Cursor">
+			<i class="bi bi-cursor"></i>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("And"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="And">
+			<span>And</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Nand"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="Nand">
+			<span>Nand</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Nor"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="Nor">
+			<span>Nor</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Not"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="Not">
+			<span>Not</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Or"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="Or">
+			<span>Or</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Wire"))'
+		data-bs-toggle="tooltip" data-bs-placement="bottom"
+		data-bs-title="Wire">
+			<span>Wire</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Xor"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="Xor">
+			<span>Xor</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("VoltageOff"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="VoltageOff">
+			<span>VoltageOff</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("VoltageOn"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="VoltageOn">
+			<span>VoltageOn</span>
+		</button>
+	</div>
+	<div>
+		<button class="btn" @onclick='(e=>ValueChangedHandler("Lamp"))'
+				data-bs-toggle="tooltip" data-bs-placement="bottom"
+				data-bs-title="Lamp">
+			<span>Lamp</span>
+		</button>
+	</div>
+</nav>
+
+@code {
+	[Parameter]
+	public string Action { get; set; } = string.Empty;
+
+	[Parameter]
+	public EventCallback<string> ActionChanged { get; set; }
+
+	private async Task ValueChangedHandler(string value)
+	{
+		Action = value;
+		await ActionChanged.InvokeAsync(Action);
+	}
+}

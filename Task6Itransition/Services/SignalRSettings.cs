@@ -1,0 +1,40 @@
+﻿using Domain.Entities;
+using Domain;
+using Microsoft.AspNetCore.SignalR.Client;
+using Domain.Enums;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Components;
+using Domain.DTOs;
+
+namespace Task6Itransition.Services
+{
+    public class SignalRSettings(NavigationManager navigation)
+    {
+        private HubConnection? _hubConnection = null;
+        public void StartBuildConnection()
+        {
+            _hubConnection = new HubConnectionBuilder()
+            .WithUrl(navigation.ToAbsoluteUri("https://localhost:7042/hub"))
+            .WithAutomaticReconnect()
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+            })
+            .Build();
+        }
+        public void AddServerCommands(CanvasService canvasService)
+        {
+            if (_hubConnection is null) throw new Exception("Start build connection first");
+            _hubConnection.On<CircuitItemDTO>("AddItem", (dto) =>
+            {
+                var item = Serialiser.GetItem(dto);
+                canvasService.AddItem(item);
+            });
+        }
+
+        public HubConnection Build()
+        {
+            return _hubConnection ?? throw new Exception("Start build connection first");
+        }
+    }
+}

@@ -1,0 +1,86 @@
+﻿@page "/"
+
+@using Domain.Entities
+@using Domain.Enums
+@using SkiaSharp
+@using SkiaSharp.Views.Blazor
+@using Microsoft.AspNetCore.SignalR.Client
+@using Domain;
+@using Task6Itransition.Services
+@using Task6Itransition.Services.Drawers;
+@using Task6Itransition.Services.Drawers.Interfaces;
+@inject CanvasService canvasService
+@inject SignalRSettings signalRSettings
+@inject IJSRuntime JS
+@implements IDisposable
+
+<NavMenu @bind-Action="curAction" />
+
+<div @onclick="OnClick">
+	<SKCanvasView OnPaintSurface="OnPaintSurface" EnableRenderLoop="true" class="w-100 h-100" @ref="canvasView" />
+</div>
+@code {
+	private SKCanvasView? canvasView;
+	private string _curAction = string.Empty;
+	private string curAction
+	{
+		get => _curAction;
+		set
+		{
+			if (_curAction != value)
+			{
+				canvasService.ChangeAction(DrawerFactory.GetDrawer(value));
+				_curAction = value;
+			}
+		}
+	}
+
+	private DotNetObjectReference<Home>? objectReference;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await canvasService.StartAsync();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			objectReference = DotNetObjectReference.Create(this);
+			await JS.InvokeVoidAsync("startTracking", objectReference);
+			await JS.InvokeVoidAsync("InitBootstrap");
+		}
+	}
+
+	private void OnPaintSurface(SKPaintSurfaceEventArgs e)
+	{
+		var canvas = e.Surface.Canvas;
+		canvas.Clear(SKColors.White);
+		canvasService.DrawAllItems(canvas);
+		canvasService.DrawTempItems(canvas);
+		canvasService.DrawPreview(canvas);
+	}
+
+	private async Task OnClick(MouseEventArgs args)
+	{
+		var model = canvasService.GetMouseClickModel(
+			args.OffsetX,
+			args.OffsetY,
+			canvasView?.Dpi ?? throw new Exception("canvas view is null"));
+
+		await canvasService.MouseClickAsync(model);
+	}
+
+	[JSInvokable]
+	public void MouseMove(double x, double y)
+	{
+		var model = canvasService.GetMouseMoveModel(x, y, canvasView?.Dpi ?? throw new Exception("canvas view is null"));
+		canvasService.MouseMove(model);
+	}
+
+	public void Dispose()
+	{
+		_ = JS.InvokeVoidAsync("stopTracking");
+		objectReference?.Dispose();
+	}
+}

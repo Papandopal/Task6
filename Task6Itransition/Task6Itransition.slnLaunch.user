@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "..\\Task6Itransition_Server\\Task6Itransition_Server.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Task6Itransition.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
