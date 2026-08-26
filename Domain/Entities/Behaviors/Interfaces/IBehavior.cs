@@ -9,8 +9,18 @@
             for (int i = 0; i < item.Outputs.Count; i++)
             {
                 Port port = item.Outputs[i];
-                if(item.OutputConnectedItems.ContainsKey(port.Position))
-                    item.OutputConnectedItems[port.Position].Inputs.First(x => x.Position == port.Position).Value = port.Value;
+
+                if (item.OutputConnectedItems.ContainsKey(port.Position))
+                {
+                    var connectedItem = item.OutputConnectedItems[port.Position];
+
+                    var input = connectedItem.Inputs.FirstOrDefault(x => x.Position == port.Position);
+
+                    if (input is not null)
+                    {
+                        input.Value = port.Value;
+                    }
+                }
             }
             foreach(var connectedItem in item.OutputConnectedItems.Values){
                 var success = connectedItem.Invoke();

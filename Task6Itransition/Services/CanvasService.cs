@@ -91,6 +91,8 @@ namespace Task6Itransition.Services
                             var distance = (new_item_output.Position - item_input.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
+                                new_item_output.Position = item_input.Position;
+
                                 new_item.OutputConnectedItems.Add(item_input.Position, item);
                                 item.InputConnectedItems.Add(item_input.Position, new_item);
                             }
@@ -113,6 +115,7 @@ namespace Task6Itransition.Services
                             var distance = (new_item_input.Position - item_output.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
+                                new_item_input.Position = item_output.Position;
                                 new_item.InputConnectedItems.Add(item_output.Position, item);
                                 item.OutputConnectedItems.Add(item_output.Position, new_item);
                             }
@@ -138,8 +141,8 @@ namespace Task6Itransition.Services
                             var distance = (new_item_output.Position - item_input.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
-                                curFigure!.MouseMove(new MouseMoveModel { X = item_input.Position.X, Y = item_input.Position.Y });
-                                curFigure.SetPotencialConnection(item_input.Position);
+                                //curFigure!.MouseMove(new MouseMoveModel { X = item_input.Position.X, Y = item_input.Position.Y });
+                                curFigure!.SetPotencialConnection(item_input.Position);
                                 isFindPotencionalConnection = true;
 
                                 var signal = curFigure.GetSignalForPotencialConnection();
