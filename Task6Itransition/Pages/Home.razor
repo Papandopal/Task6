@@ -22,6 +22,7 @@
 </div>
 @code {
 	private SKCanvasView? canvasView;
+	private string mapName = "Test";
 	private string _curAction = string.Empty;
 	private string curAction
 	{
@@ -30,14 +31,8 @@
 		{
 			if (_curAction != value)
 			{
-				if (value == "SaveScheme" && canvasService.HubConnection is not null) {
-					saveSchemeService.SaveScheme(canvasService.AllItems, canvasService.HubConnection);
-				}
-				else
-				{
-					IDrawer? drawer = DrawerFactory.GetDrawer(value);
-					if (drawer is not null) canvasService.ChangeAction(drawer);
-				}
+				IDrawer? drawer = DrawerFactory.GetDrawer(value);
+				if (drawer is not null) canvasService.ChangeAction(drawer);
 				_curAction = value;
 			}
 		}
@@ -47,7 +42,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		await canvasService.StartAsync();
+		await canvasService.StartAsync(mapName);
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)

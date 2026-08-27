@@ -8,19 +8,18 @@ namespace Task6Itransition.Services
 {
     public class CenterHub(AppDbContext dbContext) : Hub
     {
-        public async Task AddItem(CircuitItemDTO dto)
+        public async Task RewriteScheme(List<CircuitItemDTO> items, string mapName)
         {
-            await Clients.Others.SendAsync("AddItem", dto);
+            await dbContext.RewriteMapAsync(items, mapName);
         }
-
-        public async Task SaveItems(List<CircuitItemDTO> items)
+        public async Task AddItems(List<CircuitItemDTO> items, string mapName)
         {
-            await dbContext.SaveAsync(items);
+            await dbContext.AddItems(items, mapName);
+            await Clients.Others.SendAsync("AddItems", items); // add groups
         }
-
-        public async Task LoadItems()
+        public async Task LoadItems(string mapName)
         {
-            await Clients.Caller.SendAsync("LoadItems", dbContext.Load());
+            await Clients.Caller.SendAsync("LoadItems", await dbContext.LoadAsync(mapName));
         }
     }
 }

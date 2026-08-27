@@ -1,43 +1,74 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Domain.DTOs;
 using Microsoft.EntityFrameworkCore;
+using SkiaSharp;
 
 namespace Task6Itransition_Server.Services.Database
 {
     public class AppDbContext : DbContext
     {
-        private DbSet<CircuitItemDTO> items;
+        private DbSet<Map> maps;
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
+            //Database.EnsureDeleted();
             Database.EnsureCreated();
-            items = Set<CircuitItemDTO>();
+            maps = Set<Map>();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<CircuitItemDTO>().HasKey(x => x.Id);
-            modelBuilder.Entity<CircuitItemDTO>().Property(x=>x.Id)
-                .HasValueGenerator<Microsoft.EntityFrameworkCore.ValueGeneration.SequentialGuidValueGenerator>();
+            modelBuilder.Entity<Map>().HasKey(x => x.Id);
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.Preserve
+            };
+
+            modelBuilder.Entity<Map>()
+                .Property(x => x.AllItems)
+                //.HasColumnType("json")
+                .HasConversion(
+                    x => JsonSerializer.Serialize(x, jsonOptions),
+                    x => JsonSerializer.Deserialize<List<CircuitItemDTO>>(x, jsonOptions) ?? new List<CircuitItemDTO>()
+                );
         }
 
-        public async Task SaveAsync(List<CircuitItemDTO> items)
+        public async Task RewriteMapAsync(List<CircuitItemDTO> items, string mapName)
         {
-            List<CircuitItemDTO> newItems = new();
-            List<CircuitItemDTO> updatedItems = new();
-            foreach(var item in items)
-            {
-                if(items.Contains(item)) updatedItems.Add(item);
-                else newItems.Add(item);
-            }
-            UpdateRange(updatedItems);
-            AddRange(newItems);
+            var map = maps.FirstOrDefault(x => x.Name == mapName);
+            if (map is null) throw new Exception("Map not found");
+
+            map.AllItems = items;   
+
             await SaveChangesAsync();
         }
 
-        public List<CircuitItemDTO> Load()
+        public async Task AddItems(List<CircuitItemDTO> items, string mapName)
         {
-            return items.ToList();
+            var map = maps.FirstOrDefault(x => x.Name == mapName);
+            if (map is null) throw new Exception("Map not found");
+
+            map.AllItems.AddRange(items);
+            Entry(map).Property(x => x.AllItems).IsModified = true;
+            await SaveChangesAsync();
+        }
+
+        public async Task<List<CircuitItemDTO>> LoadAsync(string mapName)
+        {
+            var map = maps.FirstOrDefault(x=>x.Name == mapName);
+            if (map is null)
+            {
+                maps.Add(new Map { Id = Guid.NewGuid(), Name = mapName, AllItems = new List<CircuitItemDTO>() });
+                await SaveChangesAsync();
+                return new List<CircuitItemDTO>();
+            }
+            else
+            {
+                return map.AllItems.ToList();
+            }
         }
     }
 }

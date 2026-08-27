@@ -25,10 +25,13 @@ namespace Task6Itransition.Services
         public void AddServerCommands(CanvasService canvasService)
         {
             if (_hubConnection is null) throw new Exception("Start build connection first");
-            _hubConnection.On<CircuitItemDTO>("AddItem", (dto) =>
+            _hubConnection.On<List<CircuitItemDTO>>("AddItems", (dtos) =>
             {
-                var item = Serialiser.GetItem(dto);
-                canvasService.AddItem(item);
+                foreach (var dto in dtos)
+                {
+                    var item = Serialiser.GetItem(dto);
+                    canvasService.AddItem(item);
+                }
             });
             _hubConnection.On<List<CircuitItemDTO>>("LoadItems", (items) =>
             {

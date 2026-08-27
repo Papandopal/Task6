@@ -1,18 +1,19 @@
 ﻿using Domain;
-using System.Reflection;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using SkiaSharp;
-using SkiaSharp.Views.Blazor;
 using Task6Itransition.Services.Drawers.Interfaces;
 using Domain.Entities.Behaviors;
+using Domain.DTOs;
 
 namespace Task6Itransition.Services
 {
-    public class CanvasService(IConfiguration configuration, SignalRSettings signalRSettings) : IAsyncDisposable
+    public class CanvasService(IConfiguration configuration, SignalRSettings signalRSettings, SaveSchemeService saveSchemeService)
+        : IAsyncDisposable
     {
+        private string mapName = string.Empty;
         private Dictionary<CircuitItemType, List<CircuitItem>> allItems = new();
         private List<CircuitItem> tempItems = new();
         private IDrawer? curFigure;
@@ -35,10 +36,11 @@ namespace Task6Itransition.Services
             await hubConnection.StartAsync();
         }
 
-        public async Task StartAsync()
+        public async Task StartAsync(string mapName)
         {
+            this.mapName = mapName;
             await StartNetworkConnectionAsync();
-            if(hubConnection is not null) await hubConnection.SendAsync("LoadItems");
+            if(hubConnection is not null) await saveSchemeService.LoadItems(HubConnection!, mapName);
         }
 
         public void ChangeAction(IDrawer? drawer)
@@ -257,7 +259,7 @@ namespace Task6Itransition.Services
                 CircuitItem item = curFigure.GetItem() ?? throw new Exception("Item null after click on canvas");
                 curFigure.DropPotencialConnection();
                 AddItem(item);
-                if (hubConnection is not null) await hubConnection.SendAsync("AddItem", Serialiser.GetItemDTO(item));
+                if (hubConnection is not null) await saveSchemeService.AddItems([item], hubConnection, mapName);
             }
         }
 
