@@ -27,7 +27,7 @@ namespace Task6Itransition.Services
 
         public async Task DeleteItemsAsync(List<CircuitItem> items, HubConnection hubConnection, string mapName)
         {
-            await hubConnection.InvokeAsync("DeleteItems", items.Select(x => Serialiser.GetItemDTO(x)).ToList(), mapName);
+            await hubConnection.InvokeAsync("DeleteItems", items.Select(x => x.Position).ToList(), mapName);
         }
     }
 }

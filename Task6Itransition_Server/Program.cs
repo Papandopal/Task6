@@ -12,7 +12,6 @@ namespace Task6Itransition_Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
 
             builder.Services.AddControllers();
 
@@ -21,8 +20,11 @@ namespace Task6Itransition_Server
                 opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            builder.Services.AddSignalR()
-                .AddJsonProtocol(options =>
+            builder.Services.AddSignalR(options =>
+            {
+                options.MaximumReceiveMessageSize = 10 * 1024 * 1024;
+            })
+            .AddJsonProtocol(options =>
             {
                 options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
             });

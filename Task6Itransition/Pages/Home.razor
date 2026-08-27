@@ -22,7 +22,7 @@
 </div>
 @code {
 	private SKCanvasView? canvasView;
-	private string mapName = "Test";
+	private string mapName = "Test3";
 	private string _curAction = string.Empty;
 	private string curAction
 	{
@@ -32,7 +32,7 @@
 			if (_curAction != value)
 			{
 				IDrawer? drawer = DrawerFactory.GetDrawer(value);
-				if (drawer is not null) canvasService.ChangeAction(drawer);
+				canvasService.ChangeAction(drawer);
 				_curAction = value;
 			}
 		}

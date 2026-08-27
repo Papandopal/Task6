@@ -34,6 +34,8 @@ namespace Task6Itransition.Services.Drawers.Drawers
             {
                 start = new SKPoint(model.X, model.Y);
                 isComplete = false;
+                previewItem?.Dispose();
+                previewItem = null;
             }
             else
             {
@@ -45,14 +47,15 @@ namespace Task6Itransition.Services.Drawers.Drawers
                     Math.Abs(start.Value.X - model.X),
                     Math.Abs(start.Value.Y - model.Y));
 
-                //builder.AddRect(rect);
                 finalRect = rect;
                 finalItem = new CircuitItem
                 {
-                    //Figures = [builder.Snapshot()]
+
                 };
                 isComplete = true;
                 start = null;
+                previewItem?.Dispose();
+                previewItem = null;
             }
         }
 
@@ -86,6 +89,7 @@ namespace Task6Itransition.Services.Drawers.Drawers
 
         public SKRect? GetRect()
         {
+            isComplete = false;
             return finalRect;
         }
     }

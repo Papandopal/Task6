@@ -42,14 +42,9 @@ namespace Task6Itransition.Services
                     canvasService.AddItem(restoredItem);
                 }
             });
-            _hubConnection.On<List<CircuitItemDTO>>("DeleteItems", (dtos) =>
+            _hubConnection.On<List<PointDTO>>("DeleteItems", (dtos) =>
             {
-                var dtoPositions = dtos.Select(d => new SKPoint(d.Position.X, d.Position.Y)).ToHashSet();
-
-                var itemsToDelete = canvasService.AllItems
-                    .Where(item => dtoPositions.Contains(item.Position))
-                    .ToList();
-
+                var itemsToDelete = canvasService.AllItems.Where(x => dtos.Contains(Serialiser.GetPointDTO(x.Position)));
                 canvasService.DeleteItemsFromCanvas(itemsToDelete);
             });
         }

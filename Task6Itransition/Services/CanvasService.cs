@@ -46,7 +46,6 @@ namespace Task6Itransition.Services
 
         public void ChangeAction(IDrawer? drawer)
         {
-            curFigure?.Dispose();
             curFigure = drawer;
         }
 
@@ -281,7 +280,7 @@ namespace Task6Itransition.Services
             };
         }
 
-        public void DeleteItemsFromCanvas(List<CircuitItem> itemsForDelete)
+        public void DeleteItemsFromCanvas(IEnumerable<CircuitItem> itemsForDelete)
         {
             foreach (var item in itemsForDelete)
             {
@@ -305,9 +304,9 @@ namespace Task6Itransition.Services
                 }
             }
 
-            DeleteItemsFromCanvas(itemsForDelete);
-
             if (hubConnection is not null) await saveSchemeService.DeleteItemsAsync(itemsForDelete, hubConnection, mapName);
+
+            DeleteItemsFromCanvas(itemsForDelete);
         }
 
         public async Task MouseClickAsync(MouseClickModel model)

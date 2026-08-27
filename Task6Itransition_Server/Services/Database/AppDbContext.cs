@@ -13,7 +13,6 @@ namespace Task6Itransition_Server.Services.Database
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
-            //Database.EnsureDeleted();
             Database.EnsureCreated();
             maps = Set<Map>();
         }
@@ -29,7 +28,6 @@ namespace Task6Itransition_Server.Services.Database
 
             modelBuilder.Entity<Map>()
                 .Property(x => x.AllItems)
-                //.HasColumnType("json")
                 .HasConversion(
                     x => JsonSerializer.Serialize(x, jsonOptions),
                     x => JsonSerializer.Deserialize<List<CircuitItemDTO>>(x, jsonOptions) ?? new List<CircuitItemDTO>()
@@ -71,12 +69,12 @@ namespace Task6Itransition_Server.Services.Database
             }
         }
 
-        public async Task DeleteItemsAsync(List<CircuitItemDTO> items, string mapName)
+        public async Task DeleteItemsAsync(List<PointDTO> items, string mapName)
         {
             var map = maps.FirstOrDefault(x => x.Name == mapName);
             if (map is null) throw new Exception("Map not found");
 
-            map.AllItems.RemoveAll(x => items.Contains(x));
+            map.AllItems.RemoveAll(x => items.Contains(x.Position));
             Entry(map).Property(x => x.AllItems).IsModified = true;
             await SaveChangesAsync();
         }

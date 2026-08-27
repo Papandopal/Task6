@@ -40,7 +40,10 @@ namespace Task6Itransition.Services.Drawers.Drawers
                 builder.LineTo(end);
                 finalItem = new CircuitItem
                 {
-                    Position = new SKPoint((end.X - start.Value.X) / 2, (end.Y - start.Value.Y) / 2),
+                    Position = new SKPoint(
+                        Math.Abs(end.X - start.Value.X) / 2 + Math.Min(end.X, start.Value.X),
+                        Math.Abs(end.Y - start.Value.Y) / 2 + Math.Min(end.Y, start.Value.Y)
+                    ),
                     Figures = [builder.Snapshot()],
                     Paints = [new SKPaint { IsAntialias = true, Color = new(255, 0, 0), Style = SKPaintStyle.Stroke, StrokeWidth = 5 }],
                     Type = CircuitItemType.Wire,
@@ -63,7 +66,10 @@ namespace Task6Itransition.Services.Drawers.Drawers
                 previewItem?.Dispose();
                 previewItem = new CircuitItem
                 {
-                    Position = new SKPoint((end.X - start.Value.X) / 2, (end.Y - start.Value.Y) / 2),
+                    Position = new SKPoint(
+                        Math.Abs(end.X - start.Value.X) / 2 + Math.Min(end.X, start.Value.X),
+                        Math.Abs(end.Y - start.Value.Y) / 2 + Math.Min(end.Y, start.Value.Y)
+                    ),
                     Figures = [builder.Snapshot()],
                     Paints = [new SKPaint { IsAntialias = true, Color = new(0, 255, 0), Style = SKPaintStyle.Stroke, StrokeWidth = 5 }],
                     Type = CircuitItemType.Wire,
