@@ -23,7 +23,8 @@ namespace Task6Itransition.Services.Drawers
             { CircuitItemType.Xor, typeof(XorDrawer) },
             { CircuitItemType.VoltageOff, typeof(VoltageOffDrawer) },
             { CircuitItemType.VoltageOn, typeof(VoltageOnDrawer) },
-            { CircuitItemType.Lamp, typeof(LampDrawer) }
+            { CircuitItemType.Lamp, typeof(LampDrawer) },
+            { CircuitItemType.Delete, typeof(DeleteDrawer) }
         };
 
         public static Type? Parse(string type)

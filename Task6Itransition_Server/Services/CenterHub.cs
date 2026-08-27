@@ -21,5 +21,11 @@ namespace Task6Itransition.Services
         {
             await Clients.Caller.SendAsync("LoadItems", await dbContext.LoadAsync(mapName));
         }
+
+        public async Task DeleteItems(List<CircuitItemDTO> items, string mapName)
+        {
+            await dbContext.DeleteItemsAsync(items, mapName);
+            await Clients.Others.SendAsync("DeleteItems", items);
+        }
     }
 }

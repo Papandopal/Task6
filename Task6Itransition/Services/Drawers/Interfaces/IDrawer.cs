@@ -4,7 +4,7 @@ using SkiaSharp;
 
 namespace Task6Itransition.Services.Drawers.Interfaces
 {
-    public interface IDrawer
+    public interface IDrawer : IDisposable
     {
         public bool IsComplete { get; }
         public void MouseClick(MouseClickModel model);

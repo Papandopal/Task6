@@ -7,6 +7,7 @@ using SkiaSharp;
 using Task6Itransition.Services.Drawers.Interfaces;
 using Domain.Entities.Behaviors;
 using Domain.DTOs;
+using Task6Itransition.Services.Drawers.Drawers;
 
 namespace Task6Itransition.Services
 {
@@ -40,11 +41,12 @@ namespace Task6Itransition.Services
         {
             this.mapName = mapName;
             await StartNetworkConnectionAsync();
-            if (hubConnection is not null) await saveSchemeService.LoadItems(HubConnection!, mapName);
+            if (hubConnection is not null) await saveSchemeService.LoadItemsAsync(HubConnection!, mapName);
         }
 
         public void ChangeAction(IDrawer? drawer)
         {
+            curFigure?.Dispose();
             curFigure = drawer;
         }
 
@@ -279,15 +281,53 @@ namespace Task6Itransition.Services
             };
         }
 
+        public void DeleteItemsFromCanvas(List<CircuitItem> itemsForDelete)
+        {
+            foreach (var item in itemsForDelete)
+            {
+                allItems[item.Type].Remove(item);
+                item.Dispose();
+            };
+        }
+
+        private async Task DeleteItemsAsync(SKRect rect)
+        {
+            var itemsForDelete = new List<CircuitItem>();
+
+            foreach (var pair in allItems)
+            {
+                foreach (var item in pair.Value)
+                {
+                    if (rect.Contains(item.Position))
+                    {
+                        itemsForDelete.Add(item);
+                    }
+                }
+            }
+
+            DeleteItemsFromCanvas(itemsForDelete);
+
+            if (hubConnection is not null) await saveSchemeService.DeleteItemsAsync(itemsForDelete, hubConnection, mapName);
+        }
+
         public async Task MouseClickAsync(MouseClickModel model)
         {
             curFigure?.MouseClick(model);
             if (curFigure?.IsComplete ?? false)
             {
+
+                if(curFigure is DeleteDrawer)
+                {
+                    var rect = ((DeleteDrawer)curFigure).GetRect();
+                    if(rect is null) return;
+                    await DeleteItemsAsync(rect.Value);
+                    return;
+                }
+
                 CircuitItem item = curFigure.GetItem() ?? throw new Exception("Item null after click on canvas");
                 curFigure.DropPotencialConnection();
                 AddItem(item);
-                if (hubConnection is not null) await saveSchemeService.AddItems([item], hubConnection, mapName);
+                if (hubConnection is not null) await saveSchemeService.AddItemsAsync([item], hubConnection, mapName);
             }
         }
 
@@ -304,7 +344,6 @@ namespace Task6Itransition.Services
         {
             if (curFigure is not null)
             {
-
                 foreach (var item in tempItems)
                 {
                     item.Dispose();

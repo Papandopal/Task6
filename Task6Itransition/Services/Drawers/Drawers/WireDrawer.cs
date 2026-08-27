@@ -15,6 +15,13 @@ namespace Task6Itransition.Services.Drawers.Drawers
         private CircuitItem? signalForPotencialConnection = null;
         bool IDrawer.IsComplete => isComplete;
 
+        void IDisposable.Dispose()
+        {
+            finalItem?.Dispose();
+            previewItem?.Dispose();
+            signalForPotencialConnection?.Dispose();
+        }
+
         void IDrawer.MouseClick(MouseClickModel model)
         {
             if (start is null)

@@ -5,6 +5,7 @@ using Domain.Enums;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Components;
 using Domain.DTOs;
+using SkiaSharp;
 
 namespace Task6Itransition.Services
 {
@@ -40,6 +41,16 @@ namespace Task6Itransition.Services
                     var restoredItem = Serialiser.GetItem(item);
                     canvasService.AddItem(restoredItem);
                 }
+            });
+            _hubConnection.On<List<CircuitItemDTO>>("DeleteItems", (dtos) =>
+            {
+                var dtoPositions = dtos.Select(d => new SKPoint(d.Position.X, d.Position.Y)).ToHashSet();
+
+                var itemsToDelete = canvasService.AllItems
+                    .Where(item => dtoPositions.Contains(item.Position))
+                    .ToList();
+
+                canvasService.DeleteItemsFromCanvas(itemsToDelete);
             });
         }
 

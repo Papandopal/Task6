@@ -8,6 +8,6 @@ namespace Domain.Enums
 {
     public enum CircuitItemType
     {
-        Wire, Not, And, Or, Xor, Nor, Nand, VoltageOn, VoltageOff, Lamp
+        Wire, Not, And, Or, Xor, Nor, Nand, VoltageOn, VoltageOff, Lamp, Delete
     }
 }

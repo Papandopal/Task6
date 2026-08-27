@@ -41,7 +41,7 @@ namespace Task6Itransition_Server.Services.Database
             var map = maps.FirstOrDefault(x => x.Name == mapName);
             if (map is null) throw new Exception("Map not found");
 
-            map.AllItems = items;   
+            map.AllItems = items;
 
             await SaveChangesAsync();
         }
@@ -58,7 +58,7 @@ namespace Task6Itransition_Server.Services.Database
 
         public async Task<List<CircuitItemDTO>> LoadAsync(string mapName)
         {
-            var map = maps.FirstOrDefault(x=>x.Name == mapName);
+            var map = maps.FirstOrDefault(x => x.Name == mapName);
             if (map is null)
             {
                 maps.Add(new Map { Id = Guid.NewGuid(), Name = mapName, AllItems = new List<CircuitItemDTO>() });
@@ -69,6 +69,16 @@ namespace Task6Itransition_Server.Services.Database
             {
                 return map.AllItems.ToList();
             }
+        }
+
+        public async Task DeleteItemsAsync(List<CircuitItemDTO> items, string mapName)
+        {
+            var map = maps.FirstOrDefault(x => x.Name == mapName);
+            if (map is null) throw new Exception("Map not found");
+
+            map.AllItems.RemoveAll(x => items.Contains(x));
+            Entry(map).Property(x => x.AllItems).IsModified = true;
+            await SaveChangesAsync();
         }
     }
 }

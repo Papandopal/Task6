@@ -9,6 +9,13 @@
 				</button>
 			</div>
 			<div>
+				<button class="btn" @onclick='(e=>ValueChangedHandler("Delete"))'
+						data-bs-toggle="tooltip" data-bs-placement="bottom"
+						data-bs-title="Delete">
+					<span>Delete</span>
+				</button>
+			</div>
+			<div>
 				<button class="btn" @onclick='(e=>ValueChangedHandler("Wire"))'
 						data-bs-toggle="tooltip" data-bs-placement="bottom"
 						data-bs-title="Wire">

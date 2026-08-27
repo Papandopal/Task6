@@ -14,6 +14,13 @@ namespace Task6Itransition.Services.Drawers.Drawers
         private CircuitItem? signalForPotencialConnection = null;
         bool IDrawer.IsComplete => isComplete;
 
+        void IDisposable.Dispose()
+        {
+            finalItem?.Dispose();
+            previewItem?.Dispose();
+            signalForPotencialConnection?.Dispose();
+        }
+
         CircuitItem? IDrawer.GetItem()
         {
             return isComplete ? finalItem : null;
