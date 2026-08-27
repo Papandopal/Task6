@@ -77,7 +77,7 @@ namespace Task6Itransition.Services.Drawers.Drawers
                     Paints = [new SKPaint { IsAntialias = true, Color = new(0, 0, 0), Style = SKPaintStyle.Stroke, StrokeWidth = 5 }],
                     Type = CircuitItemType.Wire,
                     Inputs = new List<Port> { new Port { Position = point, Value = false } },
-                    Outputs = new List<Port> { new Port { Position = point, Value = false } }
+                    Outputs = new List<Port> { }
                 };
             }
         }

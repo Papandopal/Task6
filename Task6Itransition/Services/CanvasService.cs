@@ -22,9 +22,9 @@ namespace Task6Itransition.Services
         private float scale = 1f;
         private HubConnection? hubConnection;
 
-        public List<CircuitItem> AllItems 
-        { 
-            get => allItems.Values.SelectMany(x=>x).ToList();
+        public List<CircuitItem> AllItems
+        {
+            get => allItems.Values.SelectMany(x => x).ToList();
         }
         public HubConnection? HubConnection { get => hubConnection; }
 
@@ -40,7 +40,7 @@ namespace Task6Itransition.Services
         {
             this.mapName = mapName;
             await StartNetworkConnectionAsync();
-            if(hubConnection is not null) await saveSchemeService.LoadItems(HubConnection!, mapName);
+            if (hubConnection is not null) await saveSchemeService.LoadItems(HubConnection!, mapName);
         }
 
         public void ChangeAction(IDrawer? drawer)
@@ -99,9 +99,15 @@ namespace Task6Itransition.Services
                             var distance = (new_item_output.Position - item_input.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
-                                new_item_output.Position = item_input.Position;
+                                if (item.InputConnectedItems.ContainsKey(item_input.Position)) continue;
 
-                                new_item.OutputConnectedItems.Add(item_input.Position, item);
+                                new_item_output.Position = item_input.Position;
+                                bool newItemDontContainsPosition = !new_item.OutputConnectedItems.ContainsKey(item_input.Position);
+                                if (newItemDontContainsPosition)
+                                {
+                                    new_item.OutputConnectedItems.Add(item_input.Position, [item]);
+                                }
+                                else new_item.OutputConnectedItems[item_input.Position].Add(item);
                                 item.InputConnectedItems.Add(item_input.Position, new_item);
                             }
                         }
@@ -123,9 +129,18 @@ namespace Task6Itransition.Services
                             var distance = (new_item_input.Position - item_output.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
+                                if (new_item.InputConnectedItems.ContainsKey(item_output.Position)) continue;
+
                                 new_item_input.Position = item_output.Position;
                                 new_item.InputConnectedItems.Add(item_output.Position, item);
-                                item.OutputConnectedItems.Add(item_output.Position, new_item);
+                                if (!item.OutputConnectedItems.ContainsKey(item_output.Position))
+                                {
+                                    item.OutputConnectedItems.Add(item_output.Position, [new_item]);
+                                }
+                                else
+                                {
+                                    item.OutputConnectedItems[item_output.Position].Add(new_item);
+                                }
                             }
                         }
                     }
@@ -149,15 +164,26 @@ namespace Task6Itransition.Services
                             var distance = (new_item_output.Position - item_input.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
+                                if (item.InputConnectedItems.ContainsKey(item_input.Position))
+                                {
+                                    continue;
+                                }
+
                                 curFigure!.SetPotencialConnection(item_input.Position);
                                 isFindPotencionalConnection = true;
 
                                 var signal = curFigure.GetSignalForPotencialConnection();
-                                if (signal is null) return isFindPotencionalConnection;
+                                if (signal is null)
+                                {
+                                    isFindPotencionalConnection = true;
+                                    continue;
+                                }
 
                                 int distanceThreshold = int.Parse(configuration["DistanceForPotencialConnection"] ?? "0");
 
-                                if (!tempItems.Any(x => (x.Position - signal.Position).Length < distanceThreshold))
+                                bool needAddSingal = !tempItems.Any(x => (x.Position - signal.Position).Length < distanceThreshold);
+
+                                if (needAddSingal)
                                 {
                                     tempItems.Add(signal);
                                 }
@@ -183,12 +209,15 @@ namespace Task6Itransition.Services
                             var distance = (new_item_input.Position - item_output.Position).Length;
                             if (distance <= int.Parse(configuration["DistanceForPotencialConnection"] ?? "0"))
                             {
-                                curFigure!.MouseMove(new MouseMoveModel { X = item_output.Position.X, Y = item_output.Position.Y });
-                                curFigure.SetPotencialConnection(item_output.Position);
+                                curFigure!.SetPotencialConnection(item_output.Position);
                                 isFindPotencionalConnection = true;
 
                                 var signal = curFigure.GetSignalForPotencialConnection();
-                                if (signal is null) return isFindPotencionalConnection;
+                                if (signal is null)
+                                {
+                                    isFindPotencionalConnection = true;
+                                    continue;
+                                }
 
                                 int distanceThreshold = int.Parse(configuration["DistanceForPotencialConnection"] ?? "0");
 
@@ -203,7 +232,6 @@ namespace Task6Itransition.Services
             }
             return isFindPotencionalConnection;
         }
-
 
         public void AddItem(CircuitItem item)
         {

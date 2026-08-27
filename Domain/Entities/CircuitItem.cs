@@ -17,7 +17,7 @@ namespace Domain.Entities
         public List<Port> Inputs { get; set; } = new();
         public List<Port> Outputs { get; set; } = new();
         public Dictionary<SKPoint, CircuitItem> InputConnectedItems { get; set; } = new();
-        public Dictionary<SKPoint, CircuitItem> OutputConnectedItems { get; set; } = new();
+        public Dictionary<SKPoint, List<CircuitItem>> OutputConnectedItems { get; set; } = new();
 
         public bool Invoke()
         {
@@ -35,11 +35,18 @@ namespace Domain.Entities
             Paints.ForEach(x => x.Dispose());
             foreach (var item in InputConnectedItems)
             {
-                item.Value.OutputConnectedItems.Remove(item.Value.OutputConnectedItems.First(x => x.Value == this).Key);
+                foreach(var point in Inputs)
+                {
+                    if (item.Value.OutputConnectedItems.ContainsKey(point.Position))
+                        item.Value.OutputConnectedItems[point.Position].Remove(this);
+                }
             }
-            foreach (var item in OutputConnectedItems)
+            foreach (var itemList in OutputConnectedItems)
             {
-                item.Value.InputConnectedItems.Remove(item.Value.InputConnectedItems.First(x => x.Value == this).Key);
+                foreach(var item in itemList.Value)
+                {
+                    item.InputConnectedItems.Remove(item.InputConnectedItems.First(x => x.Value == this).Key);
+                }
             }
         }
     }
