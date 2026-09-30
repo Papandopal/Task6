@@ -1,0 +1,81 @@
+﻿@page "/game/{MapName}"
+
+@inject CanvasService canvasService
+@inject SignalRSettings signalRSettings
+@inject ServerCommandsService serverCommandsService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<NavMenu @bind-Action="curAction" />
+
+<div @onclick="OnClick">
+	<SKCanvasView OnPaintSurface="OnPaintSurface" EnableRenderLoop="true" class="w-100 h-100" @ref="canvasView" />
+</div>
+@code {
+	[Parameter]
+	public string MapName { get; set; } = "";
+	private SKCanvasView? canvasView;
+	private string _curAction = string.Empty;
+	private string curAction
+	{
+		get => _curAction;
+		set
+		{
+			if (_curAction != value)
+			{
+				IDrawer? drawer = DrawerFactory.GetDrawer(value);
+				canvasService.ChangeAction(drawer);
+				_curAction = value;
+			}
+		}
+	}
+
+	private DotNetObjectReference<Game>? objectReference;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await canvasService.StartAsync(MapName);
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			objectReference = DotNetObjectReference.Create(this);
+			await JS.InvokeVoidAsync("startTracking", objectReference);
+			await JS.InvokeVoidAsync("InitBootstrap");
+		}
+	}
+
+	private void OnPaintSurface(SKPaintSurfaceEventArgs e)
+	{
+		var canvas = e.Surface.Canvas;
+		canvas.Clear(SKColors.White);
+		canvasService.DrawAllItems(canvas);
+		canvasService.DrawTempItems(canvas);
+		canvasService.DrawPreview(canvas);
+	}
+
+	private async Task OnClick(MouseEventArgs args)
+	{
+		var model = canvasService.GetMouseClickModel(
+			args.OffsetX,
+			args.OffsetY,
+			canvasView?.Dpi ?? throw new Exception("canvas view is null"));
+
+		await canvasService.MouseClickAsync(model);
+	}
+
+	[JSInvokable]
+	public void MouseMove(double x, double y)
+	{
+		var model = canvasService.GetMouseMoveModel(x, y, canvasView?.Dpi ?? throw new Exception("canvas view is null"));
+		canvasService.MouseMove(model);
+	}
+
+	public void Dispose()
+	{
+		_ = JS.InvokeVoidAsync("stopTracking");
+		objectReference?.Dispose();
+	}
+}

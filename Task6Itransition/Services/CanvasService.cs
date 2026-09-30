@@ -11,7 +11,7 @@ using Task6Itransition.Services.Drawers.Drawers;
 
 namespace Task6Itransition.Services
 {
-    public class CanvasService(IConfiguration configuration, SignalRSettings signalRSettings, SaveSchemeService saveSchemeService)
+    public class CanvasService(IConfiguration configuration, SignalRSettings signalRSettings, ServerCommandsService serverCommandsService)
         : IAsyncDisposable
     {
         private string mapName = string.Empty;
@@ -29,19 +29,13 @@ namespace Task6Itransition.Services
         }
         public HubConnection? HubConnection { get => hubConnection; }
 
-        private async Task StartNetworkConnectionAsync()
-        {
-            signalRSettings.StartBuildConnection();
-            signalRSettings.AddServerCommands(this);
-            hubConnection = signalRSettings.Build();
-            await hubConnection.StartAsync();
-        }
-
         public async Task StartAsync(string mapName)
         {
             this.mapName = mapName;
-            await StartNetworkConnectionAsync();
-            if (hubConnection is not null) await saveSchemeService.LoadItemsAsync(HubConnection!, mapName);
+            signalRSettings.AddServerCommandsForCanvas(this);
+            hubConnection = signalRSettings.GetConnection();
+            serverCommandsService.Connection = hubConnection;
+            if (hubConnection is not null) await serverCommandsService.LoadItemsAsync(mapName);
         }
 
         public void ChangeAction(IDrawer? drawer)
@@ -304,7 +298,7 @@ namespace Task6Itransition.Services
                 }
             }
 
-            if (hubConnection is not null) await saveSchemeService.DeleteItemsAsync(itemsForDelete, hubConnection, mapName);
+            if (hubConnection is not null) await serverCommandsService.DeleteItemsAsync(itemsForDelete, mapName);
 
             DeleteItemsFromCanvas(itemsForDelete);
         }
@@ -326,7 +320,7 @@ namespace Task6Itransition.Services
                 CircuitItem item = curFigure.GetItem() ?? throw new Exception("Item null after click on canvas");
                 curFigure.DropPotencialConnection();
                 AddItem(item);
-                if (hubConnection is not null) await saveSchemeService.AddItemsAsync([item], hubConnection, mapName);
+                if (hubConnection is not null) await serverCommandsService.AddItemsAsync([item], mapName);
             }
         }
 

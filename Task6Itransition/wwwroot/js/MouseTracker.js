@@ -1,10 +1,9 @@
-﻿//window.mouseTracker = {
-dotNetHelper: null;
-mouseX: 0;
-mouseY: 0;
-isTracking: false;
-lastSentX: -1;
-lastSentY: -1;
+﻿dotNetHelper = null;
+mouseX = 0;
+mouseY = 0;
+isTracking = false;
+lastSentX = -1;
+lastSentY = -1;
 
 function startTracking(dotNetHelper) {
     this.dotNetHelper = dotNetHelper;
@@ -35,4 +34,3 @@ function startTracking(dotNetHelper) {
 function stopTracking() {
     this.isTracking = false;
 }
-//};

@@ -15,17 +15,29 @@ namespace Task6Itransition.Services
         public async Task AddItems(List<CircuitItemDTO> items, string mapName)
         {
             await dbContext.AddItems(items, mapName);
-            await Clients.Others.SendAsync("AddItems", items); // add groups
+            await Clients.OthersInGroup(mapName).SendAsync("AddItems", items); 
         }
         public async Task LoadItems(string mapName)
         {
+            await Groups.AddToGroupAsync(Context.ConnectionId, mapName);
             await Clients.Caller.SendAsync("LoadItems", await dbContext.LoadAsync(mapName));
         }
 
         public async Task DeleteItems(List<PointDTO> items, string mapName)
         {
             await dbContext.DeleteItemsAsync(items, mapName);
-            await Clients.Others.SendAsync("DeleteItems", items);
+            await Clients.OthersInGroup(mapName).SendAsync("DeleteItems", items);
+        }
+
+        public async Task GetAllMapsNames()
+        {
+            IEnumerable<string> result = dbContext.GetAllMapsNames().ToList();
+            await Clients.Caller.SendAsync("GetAllMapsNames", result);
+        }
+
+        public async Task MapIsExists(string mapName)
+        {
+            await Clients.Caller.SendAsync("MapIsExists", dbContext.MapIsExists(mapName));
         }
     }
 }

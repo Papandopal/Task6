@@ -1,89 +1,82 @@
 ﻿@page "/"
 
-@using Domain.Entities
-@using Domain.Enums
-@using SkiaSharp
-@using SkiaSharp.Views.Blazor
-@using Microsoft.AspNetCore.SignalR.Client
-@using Domain;
-@using Task6Itransition.Services
-@using Task6Itransition.Services.Drawers;
-@using Task6Itransition.Services.Drawers.Interfaces;
-@inject CanvasService canvasService
+@inject NavigationManager navigationManager
 @inject SignalRSettings signalRSettings
-@inject SaveSchemeService saveSchemeService
-@inject IJSRuntime JS
-@implements IDisposable
+@inject ServerCommandsService serverCommandsService
 
-<NavMenu @bind-Action="curAction" />
-
-<div @onclick="OnClick">
-	<SKCanvasView OnPaintSurface="OnPaintSurface" EnableRenderLoop="true" class="w-100 h-100" @ref="canvasView" />
+<div class="align-content-center">
+	<h2>Join to map</h2>
+	@if (mapNames is not null)
+	{
+		<select class="form-select" @onchange="GoToGame">
+			<option disabled selected hidden>Maps</option>
+			@foreach (var map in mapNames)
+			{
+				<option value="@map">@map</option>
+			}
+		</select>
+	}
+	<h2>or create new</h2>
+	<input @bind="newMapName" type="text" placeholder="Name" @oninput="MapNameInput" />
+	<button @onclick="GoToNewGame" disabled="@IsCreateMapButtonDisapled">Create</button>
+	<label>@CreatingMapErrorMessage</label>
 </div>
 @code {
-	private SKCanvasView? canvasView;
-	private string mapName = "Test3";
-	private string _curAction = string.Empty;
-	private string curAction
+	private IEnumerable<string>? mapNames = null;
+	private PeriodicTimer? periodicTimer = new(TimeSpan.FromSeconds(1));
+	private bool IsCreateMapButtonDisapled { get; set; } = true;
+	private string CreatingMapErrorMessage = string.Empty;
+	private string newMapName = string.Empty;
+
+	public void SetMapsNames(IEnumerable<string> names)
 	{
-		get => _curAction;
-		set
-		{
-			if (_curAction != value)
-			{
-				IDrawer? drawer = DrawerFactory.GetDrawer(value);
-				canvasService.ChangeAction(drawer);
-				_curAction = value;
-			}
-		}
+		mapNames = names;
+		StateHasChanged();
 	}
 
-	private DotNetObjectReference<Home>? objectReference;
+	public void MapIsExists(bool isExists)
+	{
+		if (isExists) {
+			CreatingMapErrorMessage = "Map is exists";
+			IsCreateMapButtonDisapled = true;
+		}
+		else
+		{
+			CreatingMapErrorMessage = string.Empty;
+			IsCreateMapButtonDisapled = false;
+		}
+	}
 
 	protected override async Task OnInitializedAsync()
 	{
-		await canvasService.StartAsync(mapName);
+		signalRSettings.AddServerCommandsForHomePage(this);
+		serverCommandsService.Connection = signalRSettings.GetConnection();
+		await serverCommandsService.GetAllMapsNamesAsync();
 	}
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
+	private void GoToGame(ChangeEventArgs e)
 	{
-		if (firstRender)
+		navigationManager.NavigateTo($"/game/{e.Value.ToString()}");
+	}
+
+	private void GoToNewGame()
+	{
+		navigationManager.NavigateTo($"/game/{newMapName}");
+	}
+
+	private async Task MapNameInput(ChangeEventArgs e)
+	{
+		periodicTimer?.Dispose();
+		periodicTimer = new(TimeSpan.FromSeconds(15));
+		try
 		{
-			objectReference = DotNetObjectReference.Create(this);
-			await JS.InvokeVoidAsync("startTracking", objectReference);
-			await JS.InvokeVoidAsync("InitBootstrap");
+			if (periodicTimer is not null && await periodicTimer.WaitForNextTickAsync()) {
+				await serverCommandsService.MapIsExists(e.Value.ToString());
+			}
 		}
-	}
-
-	private void OnPaintSurface(SKPaintSurfaceEventArgs e)
-	{
-		var canvas = e.Surface.Canvas;
-		canvas.Clear(SKColors.White);
-		canvasService.DrawAllItems(canvas);
-		canvasService.DrawTempItems(canvas);
-		canvasService.DrawPreview(canvas);
-	}
-
-	private async Task OnClick(MouseEventArgs args)
-	{
-		var model = canvasService.GetMouseClickModel(
-			args.OffsetX,
-			args.OffsetY,
-			canvasView?.Dpi ?? throw new Exception("canvas view is null"));
-
-		await canvasService.MouseClickAsync(model);
-	}
-
-	[JSInvokable]
-	public void MouseMove(double x, double y)
-	{
-		var model = canvasService.GetMouseMoveModel(x, y, canvasView?.Dpi ?? throw new Exception("canvas view is null"));
-		canvasService.MouseMove(model);
-	}
-
-	public void Dispose()
-	{
-		_ = JS.InvokeVoidAsync("stopTracking");
-		objectReference?.Dispose();
+		catch
+		{
+				
+		}
 	}
 }

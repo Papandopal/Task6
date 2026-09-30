@@ -34,6 +34,11 @@ namespace Task6Itransition_Server.Services.Database
                 );
         }
 
+        public bool MapIsExists(string mapName)
+        {
+            var map = maps.FirstOrDefault(x => x.Name == mapName);
+            return map is not null;
+        }
         public async Task RewriteMapAsync(List<CircuitItemDTO> items, string mapName)
         {
             var map = maps.FirstOrDefault(x => x.Name == mapName);
@@ -77,6 +82,11 @@ namespace Task6Itransition_Server.Services.Database
             map.AllItems.RemoveAll(x => items.Contains(x.Position));
             Entry(map).Property(x => x.AllItems).IsModified = true;
             await SaveChangesAsync();
+        }
+
+        public IEnumerable<string> GetAllMapsNames()
+        {
+            return maps.Select(x => x.Name);
         }
     }
 }

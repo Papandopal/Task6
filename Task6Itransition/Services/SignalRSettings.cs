@@ -6,26 +6,29 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Components;
 using Domain.DTOs;
 using SkiaSharp;
+using Task6Itransition.Pages;
 
 namespace Task6Itransition.Services
 {
-    public class SignalRSettings(NavigationManager navigation)
+    public class SignalRSettings
     {
-        private HubConnection? _hubConnection = null;
-        public void StartBuildConnection()
+        private HubConnection _hubConnection;
+        private readonly NavigationManager _navigationManager;
+        public SignalRSettings(NavigationManager navigation)
         {
+            _navigationManager = navigation;
             _hubConnection = new HubConnectionBuilder()
-            .WithUrl(navigation.ToAbsoluteUri("https://localhost:7042/hub"))
+            .WithUrl(_navigationManager.ToAbsoluteUri("https://localhost:7042/hub"))
             .WithAutomaticReconnect()
             .AddJsonProtocol(options =>
             {
                 options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
             })
             .Build();
+            _hubConnection.StartAsync();
         }
-        public void AddServerCommands(CanvasService canvasService)
+        public void AddServerCommandsForCanvas(CanvasService canvasService)
         {
-            if (_hubConnection is null) throw new Exception("Start build connection first");
             _hubConnection.On<List<CircuitItemDTO>>("AddItems", (dtos) =>
             {
                 foreach (var dto in dtos)
@@ -49,9 +52,33 @@ namespace Task6Itransition.Services
             });
         }
 
-        public HubConnection Build()
+        public void RemoveServerCommandsForCanvas()
         {
-            return _hubConnection ?? throw new Exception("Start build connection first");
+            _hubConnection.Remove("AddItems");
+            _hubConnection.Remove("LoadItems");
+            _hubConnection.Remove("DeleteItems");
+        }
+
+        public void AddServerCommandsForHomePage(Home home)
+        {
+            _hubConnection.On<IEnumerable<string>>("GetAllMapsNames", (mapNames) =>
+            {
+                home.SetMapsNames(mapNames);
+            });
+
+            _hubConnection.On<bool>("MapIsExists", (isExists) =>
+            {
+                home.MapIsExists(isExists);
+            });
+        }
+
+        public void RemoveServerCommandsForHomePage()
+        {
+            _hubConnection.Remove("GetAllNames");
+        }
+        public HubConnection GetConnection()
+        {
+            return _hubConnection;
         }
     }
 }
