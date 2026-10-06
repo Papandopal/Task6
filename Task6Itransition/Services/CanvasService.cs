@@ -8,6 +8,7 @@ using Task6Itransition.Services.Drawers.Interfaces;
 using Domain.Entities.Behaviors;
 using Domain.DTOs;
 using Task6Itransition.Services.Drawers.Drawers;
+using System.Drawing;
 
 namespace Task6Itransition.Services
 {
@@ -15,10 +16,14 @@ namespace Task6Itransition.Services
         : IAsyncDisposable
     {
         private string mapName = string.Empty;
+        private string userName = string.Empty;
+        private Guid userId;
         private Dictionary<CircuitItemType, List<CircuitItem>> allItems = new();
+        private Dictionary<Guid, UserCursor> cursors = new();
         private List<CircuitItem> tempItems = new();
         private IDrawer? curFigure;
         private SKPoint curPos = new SKPoint();
+        private Timer? curPositionTimer;
         private int basedViewPerimeter = 100;
         private float scale = 1f;
         private HubConnection? hubConnection;
@@ -29,18 +34,42 @@ namespace Task6Itransition.Services
         }
         public HubConnection? HubConnection { get => hubConnection; }
 
-        public async Task StartAsync(string mapName)
+        public async Task StartAsync(string mapName, string userName, Guid userId)
         {
             this.mapName = mapName;
+            this.userName = userName;
+            this.userId = userId;
             signalRSettings.AddServerCommandsForCanvas(this);
             hubConnection = signalRSettings.GetConnection();
             serverCommandsService.Connection = hubConnection;
-            if (hubConnection is not null) await serverCommandsService.LoadItemsAsync(mapName);
+            await serverCommandsService.LoadItemsAsync(mapName);
+            await serverCommandsService.AddUser(mapName, userName, userId);
+            curPositionTimer = new Timer((state) =>
+            {
+                serverCommandsService.DrawUserCursor(curPos, mapName, userId);
+            },
+            null, 0, configuration.GetValue<int>("SendUserPositionPeriod"));
         }
 
         public void ChangeAction(IDrawer? drawer)
         {
             curFigure = drawer;
+        }
+
+        public void UpdateCursor(SKPoint cursor, Guid cursorOwnerId)
+        {
+            cursors[cursorOwnerId].Position = cursor;
+        }
+
+        public void LoadUsers(Dictionary<Guid, UserName> users)
+        {
+            cursors = users
+                .Select(x => new KeyValuePair<Guid, UserCursor>(x.Key, new UserCursor
+                {
+                    UserName = x.Value,
+                    Position = new SKPoint()
+                }))
+                .ToDictionary();
         }
 
         private void DrawItem(SKCanvas canvas, CircuitItem figure)
@@ -71,6 +100,51 @@ namespace Task6Itransition.Services
                 if (item is not null)
                 {
                     DrawItem(canvas, item);
+                }
+            }
+        }
+
+        private SKColor ColorFromGuid(Guid guid)
+        {
+            var values = guid.ToByteArray().Select(b => (int)b);
+            byte red = (byte)(values.Take(5).Sum() % 255);
+            byte green = (byte)(values.Skip(5).Take(5).Sum() % 255);
+            byte blue = (byte)(values.Skip(10).Take(5).Sum() % 255);
+
+            return new SKColor(red, green, blue);
+        }
+
+        public void DrawCursor(SKCanvas canvas)
+        {
+            if (curFigure is null && cursors.ContainsKey(userId))
+            {
+                var curUser = cursors[userId];
+                string cursorName = curUser.UserName.Name;
+                if (curUser.UserName.Postfix != 0) cursorName += $"({curUser.UserName.Postfix})";
+                canvas.DrawText(cursorName,
+                    curPos, SKTextAlign.Left,
+                    new SKFont(),
+                    new SKPaint
+                    {
+                        Color = ColorFromGuid(userId)
+                    }
+                );
+            }
+            foreach (var cursor in cursors)
+            {
+                if (cursor.Key != userId)
+                {
+                    string cursorName = cursor.Value.UserName.Name;
+                    if (cursor.Value.UserName.Postfix != 0) cursorName += $"({cursor.Value.UserName.Postfix})";
+                    canvas.DrawText(cursorName,
+                        cursor.Value.Position,
+                        SKTextAlign.Left,
+                        new SKFont(),
+                        new SKPaint
+                        {
+                            Color = ColorFromGuid(cursor.Key)
+                        }
+                    );
                 }
             }
         }
@@ -280,7 +354,8 @@ namespace Task6Itransition.Services
             {
                 allItems[item.Type].Remove(item);
                 item.Dispose();
-            };
+            }
+            ;
         }
 
         private async Task DeleteItemsAsync(SKRect rect)
@@ -309,10 +384,10 @@ namespace Task6Itransition.Services
             if (curFigure?.IsComplete ?? false)
             {
 
-                if(curFigure is DeleteDrawer)
+                if (curFigure is DeleteDrawer)
                 {
                     var rect = ((DeleteDrawer)curFigure).GetRect();
-                    if(rect is null) return;
+                    if (rect is null) return;
                     await DeleteItemsAsync(rect.Value);
                     return;
                 }
@@ -347,11 +422,16 @@ namespace Task6Itransition.Services
                 CheckInputConnection();
                 curFigure.MouseMove(model);
             }
+            curPos = new SKPoint(model.X, model.Y);
         }
 
         public async ValueTask DisposeAsync()
         {
-            if (hubConnection is not null) await hubConnection.DisposeAsync();
+            if (hubConnection is not null)
+            {
+                await hubConnection.DisposeAsync();
+            }
+            curPositionTimer?.Dispose();
         }
     }
 }

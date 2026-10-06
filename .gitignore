@@ -26,6 +26,7 @@ bld/
 .vs/
 cso.dat
 *.bat
+papandopala*
 
 # .NET Core
 project.lock.json

@@ -5,7 +5,8 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<WasmBuildNative>true</WasmBuildNative>
-	</PropertyGroup>
+	  <UserSecretsId>19b1d2fa-5291-45ba-b76d-2ccce5b878f6</UserSecretsId>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.3" />

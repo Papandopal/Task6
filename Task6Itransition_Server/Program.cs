@@ -17,7 +17,7 @@ namespace Task6Itransition_Server
 
             builder.Services.AddDbContext<AppDbContext>(opt =>
             {
-                opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+                opt.UseSqlServer(builder.Configuration.GetConnectionString("MSSQLConnectionString"));
             });
 
             builder.Services.AddSignalR(options =>
@@ -28,10 +28,11 @@ namespace Task6Itransition_Server
             {
                 options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
             });
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy", policy =>
-                    policy.WithOrigins(builder.Configuration["WASMUrl"]!)
+                    policy.WithOrigins(builder.Configuration["WASMUrl"])
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials());
@@ -41,11 +42,16 @@ namespace Task6Itransition_Server
 
 
             app.UseHttpsRedirection();
+                
             app.UseCors("CorsPolicy");
 
-            app.MapHub<CenterHub>("/hub");
+            app.MapHub<CenterHub>("/hub").RequireCors("CorsPolicy");
 
-            app.MapControllers();
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+            }
 
             app.Run();
         }

@@ -14,11 +14,11 @@ namespace Task6Itransition.Services
     {
         private HubConnection _hubConnection;
         private readonly NavigationManager _navigationManager;
-        public SignalRSettings(NavigationManager navigation)
+        public SignalRSettings(NavigationManager navigation, IConfiguration configuration)
         {
             _navigationManager = navigation;
             _hubConnection = new HubConnectionBuilder()
-            .WithUrl(_navigationManager.ToAbsoluteUri("https://localhost:7042/hub"))
+            .WithUrl(_navigationManager.ToAbsoluteUri(configuration["ServerURL"] +"/hub"))
             .WithAutomaticReconnect()
             .AddJsonProtocol(options =>
             {
@@ -37,6 +37,7 @@ namespace Task6Itransition.Services
                     canvasService.AddItem(item);
                 }
             });
+
             _hubConnection.On<List<CircuitItemDTO>>("LoadItems", (items) =>
             {
                 foreach (var item in items)
@@ -45,10 +46,21 @@ namespace Task6Itransition.Services
                     canvasService.AddItem(restoredItem);
                 }
             });
+
             _hubConnection.On<List<PointDTO>>("DeleteItems", (dtos) =>
             {
                 var itemsToDelete = canvasService.AllItems.Where(x => dtos.Contains(Serialiser.GetPointDTO(x.Position)));
                 canvasService.DeleteItemsFromCanvas(itemsToDelete);
+            });
+
+            _hubConnection.On<PointDTO, Guid>("DrawUserCursor", (cursor, cursorOwnerId) =>
+            {
+                canvasService.UpdateCursor(Serialiser.GetPoint(cursor), cursorOwnerId);
+            });
+
+            _hubConnection.On<Dictionary<Guid, UserName>>("LoadUsers", (users) =>
+            {
+                canvasService.LoadUsers(users);
             });
         }
 
@@ -57,6 +69,8 @@ namespace Task6Itransition.Services
             _hubConnection.Remove("AddItems");
             _hubConnection.Remove("LoadItems");
             _hubConnection.Remove("DeleteItems");
+            _hubConnection.Remove("DrawUserCursor");
+            _hubConnection.Remove("LoadUsers");
         }
 
         public void AddServerCommandsForHomePage(Home home)

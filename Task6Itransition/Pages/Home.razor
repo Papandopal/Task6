@@ -1,32 +1,41 @@
 ﻿@page "/"
 
+@inject IConfiguration configuration
 @inject NavigationManager navigationManager
 @inject SignalRSettings signalRSettings
 @inject ServerCommandsService serverCommandsService
 
-<div class="align-content-center">
-	<h2>Join to map</h2>
-	@if (mapNames is not null)
-	{
-		<select class="form-select" @onchange="GoToGame">
-			<option disabled selected hidden>Maps</option>
-			@foreach (var map in mapNames)
-			{
-				<option value="@map">@map</option>
-			}
-		</select>
-	}
-	<h2>or create new</h2>
-	<input @bind="newMapName" type="text" placeholder="Name" @oninput="MapNameInput" />
-	<button @onclick="GoToNewGame" disabled="@IsCreateMapButtonDisapled">Create</button>
-	<label>@CreatingMapErrorMessage</label>
+<div class="d-flex justify-content-center align-items-center">
+	<div class="w-25 pt-5" style="min-width: 300px">
+		<label>Name:</label>
+		<input required type="text" @bind="userName" @oninput="UserChangeName" />
+	
+		<h2>Join to map</h2>
+		@if (mapNames is not null)
+		{
+			<select disabled="@IsMapSelectorDisabled" class="form-select" @onchange="GoToGame">
+				<option disabled selected hidden>Maps</option>
+				@foreach (var map in mapNames)
+				{
+					<option value="@map">@map</option>
+				}
+			</select>
+		}
+		<h2>or create new</h2>
+		<input @bind="newMapName" type="text" placeholder="Name" @oninput="MapNameInput" />
+		<button @onclick="GoToNewGame" disabled="@IsCreateMapButtonDisapled" class="btn">Create</button>
+		<label>@CreatingMapErrorMessage</label>
+	</div>
 </div>
 @code {
 	private IEnumerable<string>? mapNames = null;
-	private PeriodicTimer? periodicTimer = new(TimeSpan.FromSeconds(1));
+	private PeriodicTimer? periodicTimer;
 	private bool IsCreateMapButtonDisapled { get; set; } = true;
+	private bool IsMapSelectorDisabled { get; set; } = true;
 	private string CreatingMapErrorMessage = string.Empty;
 	private string newMapName = string.Empty;
+	private string userName = string.Empty;
+	private Guid userId = Guid.NewGuid();
 
 	public void SetMapsNames(IEnumerable<string> names)
 	{
@@ -36,7 +45,8 @@
 
 	public void MapIsExists(bool isExists)
 	{
-		if (isExists) {
+		if (isExists)
+		{
 			CreatingMapErrorMessage = "Map is exists";
 			IsCreateMapButtonDisapled = true;
 		}
@@ -56,27 +66,34 @@
 
 	private void GoToGame(ChangeEventArgs e)
 	{
-		navigationManager.NavigateTo($"/game/{e.Value.ToString()}");
+		if (!string.IsNullOrWhiteSpace(userName)) navigationManager.NavigateTo($"/game/{e.Value.ToString()}/{userId}/{userName}");
 	}
 
 	private void GoToNewGame()
 	{
-		navigationManager.NavigateTo($"/game/{newMapName}");
+		if (!string.IsNullOrWhiteSpace(userName)) navigationManager.NavigateTo($"/game/{newMapName}/{userId}/{userName}");
 	}
 
 	private async Task MapNameInput(ChangeEventArgs e)
 	{
 		periodicTimer?.Dispose();
-		periodicTimer = new(TimeSpan.FromSeconds(15));
+		periodicTimer = new(TimeSpan.FromSeconds(long.Parse(configuration["TimeForMapNameInput"])));
 		try
 		{
-			if (periodicTimer is not null && await periodicTimer.WaitForNextTickAsync()) {
+			if (periodicTimer is not null && await periodicTimer.WaitForNextTickAsync())
+			{
 				await serverCommandsService.MapIsExists(e.Value.ToString());
 			}
 		}
 		catch
 		{
-				
+
 		}
+	}
+
+	private void UserChangeName(ChangeEventArgs e)
+	{
+		if (!string.IsNullOrEmpty(e.Value.ToString())) IsMapSelectorDisabled = false;
+		else IsMapSelectorDisabled = true;
 	}
 }

@@ -1,4 +1,4 @@
-﻿@page "/game/{MapName}"
+﻿@page "/game/{MapName}/{UserId}/{UserName}"
 
 @inject CanvasService canvasService
 @inject SignalRSettings signalRSettings
@@ -13,7 +13,11 @@
 </div>
 @code {
 	[Parameter]
-	public string MapName { get; set; } = "";
+	public string MapName { get; set; } = string.Empty;
+	[Parameter]
+	public string UserId { get; set; } = string.Empty;
+	[Parameter]
+	public string UserName { get; set; } = string.Empty;
 	private SKCanvasView? canvasView;
 	private string _curAction = string.Empty;
 	private string curAction
@@ -34,7 +38,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		await canvasService.StartAsync(MapName);
+		await canvasService.StartAsync(MapName, UserName,Guid.Parse(UserId));
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -54,6 +58,7 @@
 		canvasService.DrawAllItems(canvas);
 		canvasService.DrawTempItems(canvas);
 		canvasService.DrawPreview(canvas);
+		canvasService.DrawCursor(canvas);
 	}
 
 	private async Task OnClick(MouseEventArgs args)

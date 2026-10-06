@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 using Microsoft.AspNetCore.SignalR.Client;
 using Domain;
+using SkiaSharp;
 
 
 namespace Task6Itransition.Services
@@ -27,6 +28,7 @@ namespace Task6Itransition.Services
         {
             await Connection.InvokeAsync("DeleteItems", items.Select(x => x.Position).ToList(), mapName);
         }
+
         public async Task GetAllMapsNamesAsync()
         {
             await Connection.InvokeAsync("GetAllMapsNames");
@@ -35,6 +37,21 @@ namespace Task6Itransition.Services
         public async Task MapIsExists(string mapName)
         {
             await Connection.InvokeAsync("MapIsExists", mapName); 
+        }
+
+        public async Task DrawUserCursor(SKPoint userPosition, string mapName, Guid userId)
+        {
+            await Connection.InvokeAsync("DrawUserCursor", Serialiser.GetPointDTO(userPosition), mapName, userId);
+        }
+
+        public async Task AddUser(string mapName, string userName, Guid userId)
+        {
+            await Connection.InvokeAsync("AddUser", mapName, userName, userId); 
+        }
+
+        public async Task RemoveUser(string mapName, Guid userId)
+        {
+            await Connection.InvokeAsync("RemoveUser", mapName, userId);
         }
     }
 }

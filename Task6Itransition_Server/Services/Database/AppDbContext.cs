@@ -13,7 +13,6 @@ namespace Task6Itransition_Server.Services.Database
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
-            Database.EnsureCreated();
             maps = Set<Map>();
         }
 
